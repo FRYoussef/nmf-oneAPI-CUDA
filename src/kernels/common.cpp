@@ -32,11 +32,11 @@ void V_div_WH(queue &q, buffer<C_REAL, 1> &b_V, buffer<C_REAL, 1> &b_WH, int N, 
         auto V = b_V.get_access<sycl_read>(cgh);
         auto WH = b_WH.get_access<sycl_read_write>(cgh);
 
-        cgh.parallel_for<class V_div_WH>(range<1>(N), [=](id <1> ij){
+        cgh.parallel_for<class V_div_WH>(range<2>(N, M), [=](id <2> ij){
             int i = ij[0];
+            int j = ij[1];
 
-            for(int j = 0; j < M; j++)
-                WH[i*M + j] = V[i*M + j] / WH[i*M + j];
+            WH[i*M + j] = V[i*M + j] / WH[i*M + j];
         });
     });
 }
@@ -48,11 +48,11 @@ void mult_M_div_vect(queue &q, buffer<C_REAL, 1> &b_M, buffer<C_REAL, 1> &b_Maux
         auto Maux = b_Maux.get_access<sycl_read>(cgh);
         auto acc = b_acc.get_access<sycl_read>(cgh);
         
-        cgh.parallel_for<class mul_M_div_vect>(range<1>(M), [=](id <1> ij){
+        cgh.parallel_for<class mul_M_div_vect>(range<2>(M, K), [=](id <2> ij){
             int i = ij[0];
+            int j = ij[1];
 
-            for(int j = 0; j < K; j++)
-                Mat[i*K + j] = Mat[i*K + j] * Maux[i*K + j] / acc[j];
+            Mat[i*K + j] = Mat[i*K + j] * Maux[i*K + j] / acc[j];
         });
     });
 }
