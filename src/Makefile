@@ -33,7 +33,7 @@ endif
 CC = dpcpp
 
 ifeq ($(CC),dpcpp)
-  CFLAGS = -D$(PDEVICE) -D$(PKERNEL) -D$(PREAL)
+  CFLAGS = -D$(PDEVICE) -D$(PKERNEL) -D$(PREAL) -fiopenmp -fopenmp-targets=spir64
 else
   CFLAGS := -std=c++11 -Wall -fsycl -D$(PDEVICE) -D$(PKERNEL) -D$(PREAL)
 endif
@@ -44,7 +44,7 @@ ifeq ($(CC), dpcpp)
   ifeq ($(PDEVICE), $(NVIDIA))
     PDEVICE = $(IGPU)
   endif
-  CFLAGS = -D$(PDEVICE) -D$(PKERNEL) -D$(PREAL)
+  CFLAGS = -D$(PDEVICE) -D$(PKERNEL) -D$(PREAL) -fiopenmp -fopenmp-targets=spir64
 endif
 
 # Debug Flags

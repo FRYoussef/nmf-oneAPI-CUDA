@@ -1,6 +1,6 @@
 #include "./common.h"
 
-void adjust_WH(queue &q, buffer<C_REAL, 1> &b_W, buffer<C_REAL, 1> &b_Ht, int N, int M, int K) {
+void adjust_WH(queue q, buffer<C_REAL, 1> b_W, buffer<C_REAL, 1> b_Ht, int N, int M, int K) {
     q.submit([&](handler& cgh) {
         auto W = b_W.get_access<sycl_read_write>(cgh);
 
@@ -27,22 +27,25 @@ void adjust_WH(queue &q, buffer<C_REAL, 1> &b_W, buffer<C_REAL, 1> &b_Ht, int N,
 }
 
 
-void V_div_WH(queue &q, buffer<C_REAL, 1> &b_V, buffer<C_REAL, 1> &b_WH, int N, int M) {
-    q.submit([&](handler& cgh) {
-        auto V = b_V.get_access<sycl_read>(cgh);
-        auto WH = b_WH.get_access<sycl_read_write>(cgh);
+void V_div_WH(queue q, buffer<C_REAL, 1> b_V, buffer<C_REAL, 1> b_WH, int N, int M) {
+    auto V = b_V.get_access<sycl_read>();
+    auto WH = b_WH.get_access<sycl_read_write>();
 
-        cgh.parallel_for<class V_div_WH>(range<2>(N, M), [=](id <2> ij){
-            int i = ij[0];
-            int j = ij[1];
+    #pragma omp parallel for schedule(static)
+    {
+        for(int i = 0; i < N; i++){
 
-            WH[i*M + j] = V[i*M + j] / WH[i*M + j];
-        });
-    });
+            #pragma omp simd
+            #pragma ivdep
+            //#pragma vector nodynamic_align
+            for(int j = 0; j < M; j++)
+                WH[i*M + j] = V[i*M + j] / WH[i*M + j];
+        }
+    }
 }
 
 
-void mult_M_div_vect(queue &q, buffer<C_REAL, 1> &b_M, buffer<C_REAL, 1> &b_Maux, buffer<C_REAL, 1> &b_acc, int M, int K) {
+void mult_M_div_vect(queue q, buffer<C_REAL, 1> b_M, buffer<C_REAL, 1> b_Maux, buffer<C_REAL, 1> b_acc, int M, int K) {
     q.submit([&](handler& cgh) {
         auto Mat = b_M.get_access<sycl_read_write>(cgh);
         auto Maux = b_Maux.get_access<sycl_read>(cgh);
